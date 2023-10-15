@@ -61,5 +61,8 @@ met_where VARCHAR(60)
 select * FROM "users";
 
 
-
+--for every user
 SELECT "users".id, "users".username, "concerts".venue, "concerts".date, ARRAY_AGG("bands".name ORDER BY "bands".concert_position ASC) FROM "users" JOIN "user_concerts" ON "user_concerts".id = "users".id JOIN "concerts" ON "concerts".id = "user_concerts".id JOIN "bands" ON "bands".concert_id = "concerts".id GROUP BY "users".id, "users".username, "concerts".venue, "concerts".date;
+
+--for specific user
+SELECT "users".id AS user_id, "users".username, "concerts".venue, "concerts".date, ARRAY_AGG("bands".name ORDER BY "bands".concert_position ASC) FROM "users" JOIN "user_concerts" ON "user_concerts".id = "users".id JOIN "concerts" ON "concerts".id = "user_concerts".id JOIN "bands" ON "bands".concert_id = "concerts".id WHERE "user_id"=2 GROUP BY "users".id, "users".username, "concerts".venue, "concerts".date;
