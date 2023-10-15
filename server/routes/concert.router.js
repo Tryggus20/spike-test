@@ -65,15 +65,26 @@ RETURNING id;`;
       const { name, concertPosition } = band;
       const addBandQuery = `INSERT INTO "bands" (concert_id, name, concert_position)
     VALUES ($1, $2, $3);`;
-
       const bandInfo = [concertId, name, concertPosition];
       await pool.query(addBandQuery, bandInfo);
     } // end of loop
     // 3) now 3rd step is to add into user_concerts
     const addCommentQuery = `INSERT INTO "user_concerts" (user_id, concert_id, comments)
-VALUES ($1, $2, $3);`;
+VALUES ($1, $2, $3)
+RETURNING id;`;
     const commentValues = [userId, concertId, comments];
-    await pool.query(addCommentQuery, commentValues);
+    const user_concertsResults = await pool.query(
+      addCommentQuery,
+      commentValues
+    );
+    const user_concert_id = user_concertsResults.rows[0].id;
+    // 4) adding into enhancements for pic url
+    const addEnhancementQuery = `INSERT INTO "enhancements" (user_concert_id, type, description)
+VALUES ($1, $2, $3 );`;
+    const { type, description } = req.body;
+    const enhancementValues = [user_concert_id, type, description];
+
+    await pool.query(addEnhancementQuery, enhancementValues);
     res.status(201).json({ message: `Concert and bands have been added` });
   } catch (err) {
     console.log(`err in adding concert and bands`, err);
