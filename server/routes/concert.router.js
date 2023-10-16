@@ -53,12 +53,30 @@ router.post("/add-concert/:id", async (req, res) => {
   // 1) adding into "concerts" first
   try {
     const { venue, city, state, date, bands, comments } = req.body;
-    const addConcertQuery = `INSERT INTO "concerts" (venue, city, state, date)
-VALUES ($1, $2, $3, $4)
-RETURNING id;`;
-    const concertInfo = [venue, city, state, date];
-    const concertResult = await pool.query(addConcertQuery, concertInfo);
-    const concertId = concertResult.rows[0].id;
+    // Checks to see if a concert already exists. If so, get the concert_id
+    // If it does not exist, it adds a new concert!
+    const checkConcertQuery = `
+    SELECT id FROM concerts 
+    WHERE venue = $1 AND city = $2 AND state = $3 AND date = $4;
+  `;
+
+    const concertValues = [venue, city, state, date];
+    const concertResult = await pool.query(checkConcertQuery, concertValues);
+
+    let concertId;
+    if (concertResult.rows.length > 0) {
+      // If concert exists, get its ID
+      concertId = concertResult.rows[0].id;
+    } else {
+      // Insert the new concert and retrieve its ID
+      const insertConcertQuery = `
+      INSERT INTO concerts (venue, city, state, date)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id;
+    `;
+      const insertResult = await pool.query(insertConcertQuery, concertValues);
+      concertId = insertResult.rows[0].id;
+    }
 
     // 2) second adding into "bands"
     for (const band of bands) {
